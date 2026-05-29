@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tectonics — Architecture & Software</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Stone warmth */
+    --paper:         #f2ede4;
+    --paper-mid:     #e8e0d2;
+    --paper-dark:    #d4c9b6;
+    --stone:         #b8ad9c;
+    --stone-dark:    #6b6054;
+    --ink:           #1a1510;
+    --ink-deep:      #251e16;
+    --charcoal:      #2a2218;
+
+    /* Blueprint precision */
+    --blue:          #2a4f8a;
+    --blue-mid:      #3d6aab;
+    --blue-light:    #5585c8;
+    --blue-faint:    rgba(42, 79, 138, 0.08);
+
+    /* Grid */
+    --grid-fine:     rgba(42, 79, 138, 0.055);
+    --grid-major:    rgba(42, 79, 138, 0.11);
+
+    /* Text */
+    --text-main:     #1a1510;
+    --text-muted:    #6b6054;
+    --text-faint:    #9a8f80;
+
+    /* Borders */
+    --border:        rgba(107, 96, 84, 0.22);
+    --border-strong: rgba(107, 96, 84, 0.38);
+    --border-blue:   rgba(42, 79, 138, 0.3);
+
+    --grid-size: 24px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--paper);
+    color: var(--text-main);
+    font-family: 'Playfair Display', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Warm paper + faint blueprint grid ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      /* marble veins — warm, very subtle */
+      repeating-linear-gradient(
+        122deg,
+        transparent 0px, transparent 200px,
+        rgba(160,148,130,0.12) 200px, rgba(160,148,130,0.12) 201px,
+        transparent 201px, transparent 380px,
+        rgba(150,138,120,0.08) 380px, rgba(150,138,120,0.08) 381px,
+        transparent 381px, transparent 520px
+      ),
+      /* blueprint fine grid */
+      linear-gradient(var(--grid-fine) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px),
+      /* blueprint major grid */
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      var(--grid-size) var(--grid-size),
+      var(--grid-size) var(--grid-size),
+      calc(var(--grid-size) * 5) calc(var(--grid-size) * 5),
+      calc(var(--grid-size) * 5) calc(var(--grid-size) * 5);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  * { position: relative; z-index: 1; }
+
+  /* ── Nav ── */
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.75rem 3.5rem;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .nav-logo {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .nav-logo .wordmark {
+    font-family: 'Playfair Display', serif;
+    font-weight: 500;
+    font-size: 1.2rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .nav-logo .descriptor {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--blue-mid);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2.75rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.63rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--blue); }
+
+  /* ── Frieze — dark stone bar with mono text ── */
+  .frieze {
+    background: var(--charcoal);
+    padding: 0.55rem 3.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .frieze span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.57rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(210, 200, 180, 0.55);
+  }
+
+  .frieze .frieze-ref {
+    color: var(--blue-light);
+    opacity: 0.7;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 5.5rem 3.5rem 4.5rem;
+    max-width: 1160px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 1px;
+    background: var(--blue-mid);
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 400;
+    font-size: clamp(3rem, 6vw, 5.2rem);
+    line-height: 1.0;
+    color: var(--ink);
+    margin-bottom: 2.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--blue);
+  }
+
+  .hero-thesis {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.8;
+    color: var(--text-muted);
+    max-width: 48ch;
+    border-left: 2px solid var(--border-blue);
+    padding-left: 1.5rem;
+  }
+
+  /* ── Annotation panels — stone feel + blueprint numbering ── */
+  .hero-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .anno-panel {
+    border: 1px solid var(--border-strong);
+    border-bottom: none;
+    padding: 1.5rem 1.75rem 1.5rem 2rem;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    background: linear-gradient(160deg, var(--paper-mid) 0%, var(--paper) 100%);
+    transition: background 0.25s;
+    cursor: pointer;
+  }
+
+  .anno-panel:last-child {
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .anno-panel:hover {
+    background: linear-gradient(160deg, rgba(42,79,138,0.07) 0%, rgba(42,79,138,0.02) 100%);
+  }
+
+  /* Blueprint corner crosshairs */
+  .anno-panel .cx { position: absolute; width: 10px; height: 10px; pointer-events: none; }
+  .anno-panel .cx::before, .anno-panel .cx::after {
+    content: ''; position: absolute; background: var(--blue-light); opacity: 0.45;
+  }
+  .anno-panel .cx::before { width: 1px; height: 100%; left: 50%; }
+  .anno-panel .cx::after  { height: 1px; width: 100%; top: 50%; }
+  .anno-panel .cx.tl { top: -5px; left: -5px; }
+  .anno-panel .cx.tr { top: -5px; right: -5px; }
+  .anno-panel .cx.bl { bottom: -5px; left: -5px; }
+  .anno-panel .cx.br { bottom: -5px; right: -5px; }
+
+  /* Blueprint drawing number */
+  .anno-panel::before {
+    content: attr(data-ref);
+    position: absolute;
+    top: -0.65rem;
+    left: 1.25rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.12em;
+    color: var(--blue-mid);
+    background: var(--paper);
+    padding: 0 0.4rem;
+  }
+
+  .anno-num {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--stone);
+    margin-bottom: 0.3rem;
+  }
+
+  .anno-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 0.35rem;
+  }
+
+  .anno-desc {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-faint);
+    line-height: 1.65;
+    letter-spacing: 0.03em;
+  }
+
+  .anno-arrow {
+    position: absolute;
+    right: 1.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--border-strong);
+    transition: color 0.2s, right 0.2s;
+  }
+
+  .anno-panel:hover .anno-arrow { color: var(--blue-mid); right: 1.1rem; }
+
+  /* ── Section rule — blueprint annotation style ── */
+  .section-rule {
+    max-width: 1160px;
+    margin: 0.25rem auto;
+    padding: 0 3.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .section-rule .rule-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.57rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    white-space: nowrap;
+    opacity: 0.75;
+  }
+
+  .section-rule::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Featured essay — dark charcoal block ── */
+  .featured {
+    padding: 1.5rem 3.5rem 2.5rem;
+    max-width: 1160px;
+    margin: 0 auto;
+  }
+
+  .featured-inner {
+    background: var(--charcoal);
+    display: grid;
+    grid-template-columns: 3.5rem 1fr;
+    position: relative;
+  }
+
+  /* Blueprint corner marks on the dark block */
+  .featured-inner .fx { position: absolute; width: 14px; height: 14px; pointer-events: none; z-index: 2; }
+  .featured-inner .fx::before, .featured-inner .fx::after {
+    content: ''; position: absolute; background: var(--blue-light); opacity: 0.3;
+  }
+  .featured-inner .fx::before { width: 1px; height: 100%; left: 50%; }
+  .featured-inner .fx::after  { height: 1px; width: 100%; top: 50%; }
+  .featured-inner .fx.tl { top: -7px; left: -7px; }
+  .featured-inner .fx.tr { top: -7px; right: -7px; }
+  .featured-inner .fx.bl { bottom: -7px; left: -7px; }
+  .featured-inner .fx.br { bottom: -7px; right: -7px; }
+
+  .featured-spine {
+    border-right: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2rem 0;
+  }
+
+  .spine-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.52rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(210,200,180,0.4);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .spine-num {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 2rem;
+    color: rgba(255,255,255,0.08);
+    line-height: 1;
+  }
+
+  .featured-body {
+    padding: 3rem 3.5rem;
+  }
+
+  .featured-kicker {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--blue-light);
+    opacity: 0.75;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .featured-kicker::before {
+    content: '';
+    display: inline-block;
+    width: 16px; height: 1px;
+    background: var(--blue-light);
+    opacity: 0.5;
+  }
+
+  .featured-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 400;
+    font-size: clamp(1.7rem, 3.2vw, 2.6rem);
+    line-height: 1.12;
+    color: #f0ebe0;
+    margin-bottom: 1.5rem;
+    max-width: 26ch;
+  }
+
+  .featured-title em { font-style: italic; color: #a8bedb; }
+
+  .featured-excerpt {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    line-height: 1.85;
+    color: rgba(240,235,224,0.5);
+    max-width: 58ch;
+    margin-bottom: 2.5rem;
+  }
+
+  .read-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #a8bedb;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-bottom: 1px solid rgba(168, 190, 219, 0.25);
+    padding-bottom: 0.2rem;
+    transition: gap 0.2s, border-color 0.2s;
+  }
+
+  .read-link:hover { gap: 1rem; border-color: #a8bedb; }
+  .read-link::after { content: '→'; }
+
+  /* ── Parallels ── */
+  .parallels {
+    padding: 1.5rem 3.5rem 4rem;
+    max-width: 1160px;
+    margin: 0 auto;
+  }
+
+  .parallels-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--border-strong);
+    border-right: none;
+  }
+
+  .parallel-card {
+    border-right: 1px solid var(--border-strong);
+    padding: 2rem 1.75rem;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    background: linear-gradient(170deg, var(--paper-mid) 0%, var(--paper) 100%);
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .parallel-card:hover {
+    background: linear-gradient(170deg, rgba(42,79,138,0.07) 0%, var(--paper) 100%);
+  }
+
+  .parallel-ref {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    opacity: 0.65;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .parallel-ref::before {
+    content: '';
+    width: 12px; height: 1px;
+    background: var(--blue-mid);
+    opacity: 0.5;
+  }
+
+  .parallel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 0.75rem;
+    line-height: 1.25;
+  }
+
+  .parallel-note {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .parallel-tags {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .parallel-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    border: 1px solid var(--border);
+    padding: 0.18rem 0.45rem;
+  }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--charcoal);
+    padding: 1.5rem 3.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  footer .f-left {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: rgba(210,200,180,0.4);
+    letter-spacing: 0.03em;
+  }
+
+  footer .f-right {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(210,200,180,0.3);
+    text-align: right;
+  }
+
+  /* ── Page load animation ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  nav           { animation: fadeUp 0.5s ease both; }
+  .hero-left    { animation: fadeUp 0.7s ease 0.1s both; }
+  .hero-right   { animation: fadeUp 0.7s ease 0.2s both; }
+  .featured     { animation: fadeUp 0.7s ease 0.3s both; }
+  .parallels    { animation: fadeUp 0.7s ease 0.35s both; }
+
+  /* ── Responsive ── */
+  @media (max-width: 780px) {
+    nav, .frieze, .featured, .parallels { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; gap: 3rem; padding: 3rem 1.5rem; }
+    .section-rule { padding: 0 1.5rem; }
+    .featured-inner { grid-template-columns: 1fr; }
+    .featured-spine { flex-direction: row; padding: 1rem 1.5rem; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .spine-label { writing-mode: horizontal-tb; transform: none; }
+    .parallels-grid { grid-template-columns: 1fr; border-right: 1px solid var(--border-strong); }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <span class="wordmark">Tectonics</span>
+    <span class="descriptor">Dwg. 001 &nbsp;·&nbsp; Index</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#">Essays</a></li>
+    <li><a href="#">Parallels</a></li>
+    <li><a href="#">Timeline</a></li>
+    <li><a href="#">Glossary</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+</nav>
+
+<div class="frieze">
+  <span>Sheet 1 of 1 &nbsp;·&nbsp; Rev. A</span>
+  <span>Architecture &amp; Software &nbsp;·&nbsp; Est. 2025</span>
+  <span class="frieze-ref">Scale 1:1</span>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-left">
+    <p class="hero-eyebrow">On structure</p>
+    <h1 class="hero-title">The grammar<br>beneath<br><em>both</em> things</h1>
+    <p class="hero-thesis">
+      Every great building is also a theory of organisation. Every elegant
+      codebase is also a philosophy of space. This site explores the deep
+      grammar shared between architectural history and software design —
+      two disciplines that keep rediscovering the same ideas.
+    </p>
+  </div>
+
+  <div class="hero-right">
+    <a class="anno-panel" data-ref="Section 01" href="#">
+      <div class="cx tl"></div><div class="cx tr"></div>
+      <div class="cx bl"></div><div class="cx br"></div>
+      <p class="anno-num">I</p>
+      <p class="anno-title">Essays</p>
+      <p class="anno-desc">Long-form writing at the intersection of the built and the digital.</p>
+      <span class="anno-arrow">→</span>
+    </a>
+    <a class="anno-panel" data-ref="Section 02" href="#">
+      <div class="cx tl"></div><div class="cx tr"></div>
+      <div class="cx bl"></div><div class="cx br"></div>
+      <p class="anno-num">II</p>
+      <p class="anno-title">Parallels</p>
+      <p class="anno-desc">Two ideas, one underlying structure. Side-by-side comparisons.</p>
+      <span class="anno-arrow">→</span>
+    </a>
+    <a class="anno-panel" data-ref="Section 03" href="#">
+      <div class="cx tl"></div><div class="cx tr"></div>
+      <div class="cx bl"></div><div class="cx br"></div>
+      <p class="anno-num">III</p>
+      <p class="anno-title">Timeline</p>
+      <p class="anno-desc">Architecture and software history drawn on a single axis.</p>
+      <span class="anno-arrow">→</span>
+    </a>
+    <a class="anno-panel" data-ref="Section 04" href="#">
+      <div class="cx tl"></div><div class="cx tr"></div>
+      <div class="cx bl"></div><div class="cx br"></div>
+      <p class="anno-num">IV</p>
+      <p class="anno-title">Glossary</p>
+      <p class="anno-desc">Key terms from both fields, cross-linked and precisely defined.</p>
+      <span class="anno-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<div class="section-rule"><span class="rule-label">Detail A — Featured essay</span></div>
+
+<!-- Featured essay -->
+<div class="featured">
+  <div class="featured-inner">
+    <div class="fx tl"></div><div class="fx tr"></div>
+    <div class="fx bl"></div><div class="fx br"></div>
+    <div class="featured-spine">
+      <span class="spine-label">Featured Essay</span>
+      <span class="spine-num">01</span>
+    </div>
+    <div class="featured-body">
+      <p class="featured-kicker">Pattern Language &nbsp;·&nbsp; Christopher Alexander &nbsp;·&nbsp; Design Patterns</p>
+      <h2 class="featured-title">The book that <em>accidentally</em> shaped the internet</h2>
+      <p class="featured-excerpt">
+        In 1977, an architect named Christopher Alexander published <em>A Pattern Language</em> — a catalogue of 253 recurring solutions to problems in building design. Twenty years later, software engineers cited it as the inspiration for one of programming's most influential ideas. Neither group fully understood what the other was doing. That gap is worth examining.
+      </p>
+      <a href="#" class="read-link">Read essay</a>
+    </div>
+  </div>
+</div>
+
+<div class="section-rule"><span class="rule-label">Detail B — Recent parallels</span></div>
+
+<!-- Parallels -->
+<div class="parallels">
+  <div class="parallels-grid">
+    <a class="parallel-card" href="#">
+      <p class="parallel-ref">Arch &nbsp;⟷&nbsp; Software</p>
+      <p class="parallel-title">Brutalism &amp; Unix</p>
+      <p class="parallel-note">Raw material, exposed process, nothing hidden. The aesthetic of honesty in concrete and in C.</p>
+      <div class="parallel-tags">
+        <span class="parallel-tag">1950s–70s</span>
+        <span class="parallel-tag">Systems</span>
+      </div>
+    </a>
+    <a class="parallel-card" href="#">
+      <p class="parallel-ref">Arch &nbsp;⟷&nbsp; Web</p>
+      <p class="parallel-title">The Grid &amp; CSS Grid</p>
+      <p class="parallel-note">From Palladio's proportional bays to a twelve-column layout system — the grid as universal organiser.</p>
+      <div class="parallel-tags">
+        <span class="parallel-tag">Renaissance</span>
+        <span class="parallel-tag">Layout</span>
+      </div>
+    </a>
+    <a class="parallel-card" href="#">
+      <p class="parallel-ref">History &nbsp;⟷&nbsp; Software</p>
+      <p class="parallel-title">The Ruin &amp; Legacy Code</p>
+      <p class="parallel-note">What we preserve, what we abandon, and why the decision is never purely technical.</p>
+      <div class="parallel-tags">
+        <span class="parallel-tag">Preservation</span>
+        <span class="parallel-tag">Refactoring</span>
+      </div>
+    </a>
+  </div>
+</div>
+
+<footer>
+  <span class="f-left">Tectonics — Architecture &amp; Software</span>
+  <span class="f-right">Built in HTML &amp; CSS &nbsp;·&nbsp; No frameworks<br>Playfair Display &amp; DM Mono</span>
+</footer>
+
+</body>
+</html>
