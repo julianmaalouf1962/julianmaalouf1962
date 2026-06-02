@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The book that accidentally shaped the internet — Tectonics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:         #f2ede4;
+    --paper-mid:     #e8e0d2;
+    --stone:         #b8ad9c;
+    --stone-dark:    #6b6054;
+    --ink:           #1a1510;
+    --charcoal:      #2a2218;
+    --blue:          #2a4f8a;
+    --blue-mid:      #3d6aab;
+    --blue-light:    #5585c8;
+    --grid-fine:     rgba(42, 79, 138, 0.055);
+    --grid-major:    rgba(42, 79, 138, 0.11);
+    --text-main:     #1a1510;
+    --text-muted:    #6b6054;
+    --text-faint:    #9a8f80;
+    --border:        rgba(107, 96, 84, 0.22);
+    --border-strong: rgba(107, 96, 84, 0.38);
+    --border-blue:   rgba(42, 79, 138, 0.3);
+    --grid-size:     24px;
+    --content-width: 680px;
+    --margin-width:  220px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--paper);
+    color: var(--text-main);
+    font-family: 'Playfair Display', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background: warm paper + whisper grid + marble veins ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        122deg,
+        transparent 0px, transparent 200px,
+        rgba(160,148,130,0.12) 200px, rgba(160,148,130,0.12) 201px,
+        transparent 201px, transparent 380px,
+        rgba(150,138,120,0.08) 380px, rgba(150,138,120,0.08) 381px,
+        transparent 381px, transparent 520px
+      ),
+      linear-gradient(var(--grid-fine) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px),
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      var(--grid-size) var(--grid-size),
+      var(--grid-size) var(--grid-size),
+      calc(var(--grid-size) * 5) calc(var(--grid-size) * 5),
+      calc(var(--grid-size) * 5) calc(var(--grid-size) * 5);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  * { position: relative; z-index: 1; }
+
+  /* ── Reading progress bar ── */
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 0%;
+    height: 2px;
+    background: var(--blue-mid);
+    z-index: 100;
+    transition: width 0.1s linear;
+  }
+
+  /* ── Nav ── */
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 3.5rem;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .nav-logo {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-decoration: none;
+  }
+
+  .nav-logo .wordmark {
+    font-family: 'Playfair Display', serif;
+    font-weight: 500;
+    font-size: 1.1rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .nav-logo .descriptor {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--blue-mid);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.63rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--blue); }
+  .nav-links a.active { color: var(--blue); border-bottom: 1px solid var(--border-blue); }
+
+  /* ── Frieze ── */
+  .frieze {
+    background: var(--charcoal);
+    padding: 0.5rem 3.5rem;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .frieze span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(210,200,180,0.45);
+  }
+
+  /* ── Article header ── */
+  .article-header {
+    max-width: calc(var(--content-width) + var(--margin-width) + 4rem);
+    margin: 0 auto;
+    padding: 4rem 3.5rem 3rem;
+  }
+
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .meta-section {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .meta-section::before {
+    content: '';
+    display: inline-block;
+    width: 16px; height: 1px;
+    background: var(--blue-mid);
+  }
+
+  .meta-divider {
+    width: 1px; height: 12px;
+    background: var(--border-strong);
+  }
+
+  .meta-info {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-faint);
+  }
+
+  .article-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 400;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.05;
+    color: var(--ink);
+    max-width: 22ch;
+    margin-bottom: 1.5rem;
+  }
+
+  .article-title em { font-style: italic; color: var(--blue); }
+
+  .article-subtitle {
+    font-size: 1.2rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--text-muted);
+    max-width: 52ch;
+    border-left: 2px solid var(--border-blue);
+    padding-left: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .article-byline {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .byline-name {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--text-muted);
+  }
+
+  .byline-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+  }
+
+  /* ── Main content layout: text + margin ── */
+  .article-body {
+    max-width: calc(var(--content-width) + var(--margin-width) + 4rem);
+    margin: 0 auto;
+    padding: 0 3.5rem 5rem;
+    display: grid;
+    grid-template-columns: var(--content-width) var(--margin-width);
+    gap: 4rem;
+    align-items: start;
+  }
+
+  /* ── Prose ── */
+  .prose {
+    min-width: 0;
+  }
+
+  .prose p {
+    font-size: 1.1rem;
+    line-height: 1.85;
+    color: var(--text-main);
+    margin-bottom: 1.6rem;
+  }
+
+  .prose p + p { text-indent: 1.5em; }
+  .prose p:first-child { text-indent: 0; }
+
+  .prose em { font-style: italic; }
+
+  .prose strong {
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .prose a {
+    color: var(--blue);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--border-blue);
+    transition: text-decoration-color 0.2s;
+  }
+
+  .prose a:hover { text-decoration-color: var(--blue); }
+
+  /* Footnote markers */
+  .fn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--blue-mid);
+    vertical-align: super;
+    line-height: 0;
+    cursor: pointer;
+    margin-left: 1px;
+    text-decoration: none;
+  }
+
+  .fn:hover { color: var(--blue); }
+
+  /* ── Section marker ── */
+  .section-marker {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 3rem 0 2rem;
+  }
+
+  .section-marker .s-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    color: var(--blue-mid);
+    white-space: nowrap;
+  }
+
+  .section-marker::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-marker .s-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* ── Pull quote ── */
+  .pull-quote {
+    margin: 2.5rem 0;
+    padding: 1.75rem 2rem;
+    border-left: 3px solid var(--blue-mid);
+    background: linear-gradient(160deg, var(--paper-mid) 0%, var(--paper) 100%);
+    position: relative;
+  }
+
+  .pull-quote::before {
+    content: '\201C';
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    line-height: 1;
+    color: var(--blue-light);
+    opacity: 0.35;
+    position: absolute;
+    top: 0.5rem;
+    left: 1.25rem;
+  }
+
+  .pull-quote p {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.35rem !important;
+    line-height: 1.55 !important;
+    color: var(--ink) !important;
+    text-indent: 0 !important;
+    margin-bottom: 0.75rem !important;
+    padding-top: 1rem;
+  }
+
+  .pull-quote cite {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-style: normal;
+  }
+
+  /* ── Image block ── */
+  .img-block {
+    margin: 2.5rem 0;
+    border: 1px solid var(--border-strong);
+    background: var(--paper-mid);
+  }
+
+  .img-block .img-placeholder {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: linear-gradient(160deg, var(--paper-mid) 0%, var(--stone) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+  }
+
+  .img-block .img-placeholder span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .img-block img {
+    width: 100%;
+    display: block;
+  }
+
+  .img-caption {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+  }
+
+  .img-caption .cap-ref {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    color: var(--blue-mid);
+    white-space: nowrap;
+  }
+
+  .img-caption p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+    margin: 0 !important;
+    text-indent: 0 !important;
+  }
+
+  /* ── Margin column ── */
+  .margin-col {
+    padding-top: 0.25rem;
+  }
+
+  .margin-note {
+    margin-bottom: 2.5rem;
+    padding-left: 1.25rem;
+    border-left: 1px solid var(--border-blue);
+    position: relative;
+  }
+
+  .margin-note .note-ref {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    color: var(--blue-mid);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .margin-note .note-ref::before {
+    content: '';
+    width: 8px; height: 1px;
+    background: var(--blue-mid);
+  }
+
+  .margin-note p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .margin-note p em {
+    font-style: italic;
+    color: var(--text-main);
+  }
+
+  /* ── Footnotes section ── */
+  .footnotes {
+    max-width: calc(var(--content-width) + var(--margin-width) + 4rem);
+    margin: 0 auto;
+    padding: 2rem 3.5rem 4rem;
+    border-top: 1px solid var(--border-strong);
+  }
+
+  .footnotes-header {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .footnotes-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .footnote-item {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text-muted);
+  }
+
+  .footnote-item .fn-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--blue-mid);
+    padding-top: 0.2rem;
+  }
+
+  /* ── Essay navigation ── */
+  .essay-nav {
+    max-width: calc(var(--content-width) + var(--margin-width) + 4rem);
+    margin: 0 auto;
+    padding: 0 3.5rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .essay-nav-card {
+    border: 1px solid var(--border-strong);
+    padding: 1.5rem 1.75rem;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    background: linear-gradient(160deg, var(--paper-mid) 0%, var(--paper) 100%);
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .essay-nav-card:hover {
+    background: linear-gradient(160deg, rgba(42,79,138,0.07) 0%, var(--paper) 100%);
+  }
+
+  .essay-nav-card.next { text-align: right; }
+
+  .nav-card-dir {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    margin-bottom: 0.5rem;
+    opacity: 0.75;
+  }
+
+  .nav-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  .nav-card-title em { font-style: italic; }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--charcoal);
+    padding: 1.5rem 3.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer .f-left {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: rgba(210,200,180,0.4);
+  }
+
+  footer .f-right {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(210,200,180,0.3);
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .article-header { animation: fadeUp 0.7s ease both; }
+  .article-body   { animation: fadeUp 0.7s ease 0.1s both; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1000px) {
+    .article-body {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .margin-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      padding: 2rem 0 0;
+      border-top: 1px solid var(--border);
+    }
+  }
+
+  @media (max-width: 700px) {
+    nav, .frieze, .article-header, .article-body,
+    .footnotes, .essay-nav, footer {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+    .nav-links { display: none; }
+    .article-title { font-size: 2.2rem; }
+    .margin-col { grid-template-columns: 1fr; }
+    .essay-nav { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-logo" href="index.html">
+    <span class="wordmark">Tectonics</span>
+    <span class="descriptor">← Back to index</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#" class="active">Essays</a></li>
+    <li><a href="#">Parallels</a></li>
+    <li><a href="#">Timeline</a></li>
+    <li><a href="#">Glossary</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+</nav>
+
+<div class="frieze">
+  <span>Essay No. 01 &nbsp;·&nbsp; Pattern Language</span>
+  <span id="read-time">Calculating read time…</span>
+</div>
+
+<!-- Article header -->
+<header class="article-header">
+  <div class="article-meta">
+    <span class="meta-section">Essays</span>
+    <div class="meta-divider"></div>
+    <span class="meta-info">Architecture &nbsp;·&nbsp; Software History</span>
+  </div>
+
+  <h1 class="article-title">
+    The book that <em>accidentally</em> shaped the internet
+  </h1>
+
+  <p class="article-subtitle">
+    Christopher Alexander wrote <em>A Pattern Language</em> for architects. Two decades later, software engineers used it to reinvent how they thought about code. Neither side fully understood what the other was doing — and that misunderstanding turned out to be productive.
+  </p>
+
+  <div class="article-byline">
+    <span class="byline-name">By the author</span>
+    <div class="meta-divider"></div>
+    <span class="byline-date">2025 &nbsp;·&nbsp; First published</span>
+  </div>
+</header>
+
+<!-- Article body -->
+<div class="article-body">
+
+  <!-- Main prose column -->
+  <article class="prose" id="article-content">
+
+    <p>
+      In 1977, an architect named Christopher Alexander published a book that would become one of the strangest crossover hits in intellectual history. <em>A Pattern Language</em> was a catalogue of 253 recurring solutions to recurring problems in building and urban design — how to site a house relative to the sun, how to arrange rooms so that people move through them naturally, how wide to make a doorway for it to feel welcoming rather than imposing.<a href="#fn1" class="fn">[1]</a> It was a book about buildings. It was received, warmly but narrowly, as a book about buildings.
+    </p>
+
+    <p>
+      Twenty years later, a group of software engineers published their own catalogue of recurring solutions. They called theirs <em>Design Patterns: Elements of Reusable Object-Oriented Software</em>. In its preface, they cited Alexander directly. The book went on to become one of the most widely read texts in the history of computing. It is known, almost universally, as the Gang of Four book — after its four authors — and its 23 patterns have shaped the architecture of software systems that billions of people use every day.
+    </p>
+
+    <div class="section-marker">
+      <span class="s-num">§ 01</span>
+      <span class="s-title">What Alexander was actually trying to do</span>
+    </div>
+
+    <p>
+      Alexander's project was more ambitious than a pattern catalogue. He believed that there was an objective quality to good design — what he called, with characteristic bluntness, "the quality without a name."<a href="#fn2" class="fn">[2]</a> Buildings that possessed it felt alive. Buildings that lacked it felt dead, regardless of how technically accomplished they were. He spent his career trying to understand what produced this quality, and <em>A Pattern Language</em> was his attempt to make the answer teachable.
+    </p>
+
+    <div class="pull-quote">
+      <p>Each pattern describes a problem which occurs over and over again in our environment, and then describes the core of the solution to that problem, in such a way that you can use this solution a million times over, without ever doing it the same way twice.</p>
+      <cite>Christopher Alexander, A Pattern Language (1977)</cite>
+    </div>
+
+    <p>
+      The key word in that sentence is <em>core</em>. Alexander was not prescribing solutions. He was distilling the structural logic that made certain solutions work — so that designers could apply that logic to their specific situation, with their specific materials, in their specific place. The pattern was a template for thinking, not a template for building.
+    </p>
+
+    <div class="img-block">
+      <div class="img-placeholder">
+        <span>Fig. 01 — Replace with image</span>
+      </div>
+      <div class="img-caption">
+        <span class="cap-ref">Fig. 01</span>
+        <p>Diagram from <em>A Pattern Language</em> illustrating Pattern 159, "Light on Two Sides of Every Room." Alexander argued that rooms with natural light from two directions feel more alive because the light is always changing.</p>
+      </div>
+    </div>
+
+    <div class="section-marker">
+      <span class="s-num">§ 02</span>
+      <span class="s-title">The translation problem</span>
+    </div>
+
+    <p>
+      When the Gang of Four encountered Alexander's work in the late 1980s, they were working on a problem that felt structurally similar to his. Object-oriented programming was new enough that nobody had yet developed a shared vocabulary for the recurring solutions that experienced programmers kept reinventing independently. A senior engineer would recognise, immediately, that a junior engineer's problem called for an Observer, or a Factory, or a Decorator — but there was no way to say so, because there was no agreed name for what an Observer was.<a href="#fn3" class="fn">[3]</a>
+    </p>
+
+    <p>
+      Alexander's pattern language offered a model for how to build that vocabulary. The form was right: name the pattern, describe the context in which it arises, describe the problem it solves, describe the solution, describe the consequences. The Gang of Four adapted this form almost exactly. What they changed was the substance.
+    </p>
+
+    <div class="section-marker">
+      <span class="s-num">§ 03</span>
+      <span class="s-title">What was lost in translation</span>
+    </div>
+
+    <p>
+      Here is the part of the story that tends to get left out. Alexander, when he encountered what the software world had done with his ideas, was not particularly enthusiastic. He felt that the Gang of Four had captured the form of his patterns while missing the point. His patterns were about life — about the felt quality of inhabited space. Their patterns were about reuse and structure. The concern had shifted from the human experience of the solution to the engineering properties of the implementation.<a href="#fn4" class="fn">[4]</a>
+    </p>
+
+    <p>
+      This is not a small difference. Alexander believed that the quality without a name could only be produced by design that attended, at every level, to the experience of the person inside the thing being designed. A doorway is the right width not because it optimises traffic flow but because it makes the person walking through it feel a certain way. Whether software can have an equivalent concern — whether there is a felt quality to a codebase, experienced not by its users but by its programmers — is a question worth sitting with.
+    </p>
+
+  </article>
+
+  <!-- Margin notes column -->
+  <aside class="margin-col">
+
+    <div class="margin-note">
+      <p class="note-ref">On the book</p>
+      <p><em>A Pattern Language</em> ran to 1,171 pages and listed 253 patterns, ranging from the regional scale (Pattern 1: Independent Regions) down to the domestic (Pattern 251: Different Chairs). It is still in print.</p>
+    </div>
+
+    <div class="margin-note">
+      <p class="note-ref">On "aliveness"</p>
+      <p>Alexander developed the idea of "aliveness" further in his four-volume <em>The Nature of Order</em> (2002–05), where he argued that it was not merely an aesthetic quality but something objectively measurable — and that it connected to deeper patterns in nature and mathematics.</p>
+    </div>
+
+    <div class="margin-note">
+      <p class="note-ref">On the Gang of Four</p>
+      <p>Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides. The book was first presented as a paper at OOPSLA 1990 and published in full in 1994. It has sold over 500,000 copies.</p>
+    </div>
+
+    <div class="margin-note">
+      <p class="note-ref">On Alexander's response</p>
+      <p>Alexander's reservations about the software patterns movement were expressed most directly in an exchange with Richard Gabriel at the 1996 OOPSLA conference. A transcript exists but has never been officially published.</p>
+    </div>
+
+  </aside>
+
+</div>
+
+<!-- Footnotes -->
+<section class="footnotes">
+  <div class="footnotes-header">Notes</div>
+
+  <div class="footnote-item" id="fn1">
+    <span class="fn-num">[1]</span>
+    <p>Alexander, Christopher, Sara Ishikawa, and Murray Silverstein. <em>A Pattern Language: Towns, Buildings, Construction.</em> Oxford University Press, 1977. The 253 patterns are numbered in descending order of scale, from Pattern 1 (Independent Regions, concerning the geography of nations) to Pattern 253 (Things from Your Life, concerning the objects you place in a room).</p>
+  </div>
+
+  <div class="footnote-item" id="fn2">
+    <span class="fn-num">[2]</span>
+    <p>Alexander introduces this concept in <em>The Timeless Way of Building</em> (1979), the theoretical companion to <em>A Pattern Language</em>. He writes: "There is a central quality which is the root criterion of life and spirit in a man, a town, a building, or a wilderness. This quality is objective and precise, but it cannot be named."</p>
+  </div>
+
+  <div class="footnote-item" id="fn3">
+    <span class="fn-num">[3]</span>
+    <p>The Observer pattern, in software terms, defines a one-to-many dependency between objects so that when one object changes state, all its dependents are notified automatically. Every modern event system — including the one that makes web browsers respond to user clicks — is an implementation of this pattern.</p>
+  </div>
+
+  <div class="footnote-item" id="fn4">
+    <span class="fn-num">[4]</span>
+    <p>Alexander expressed this view in the 1996 OOPSLA panel discussion. Gabriel, who organised the exchange, summarised Alexander's position as: the Gang of Four patterns describe good engineering, but engineering is not the same thing as architecture, and architecture is not the same thing as the kind of design Alexander cared about.</p>
+  </div>
+</section>
+
+<!-- Essay navigation -->
+<nav class="essay-nav" aria-label="Essay navigation">
+  <a class="essay-nav-card" href="#">
+    <p class="nav-card-dir">← Previous essay</p>
+    <p class="nav-card-title">Brutalism &amp; Unix: the aesthetic of honesty</p>
+  </a>
+  <a class="essay-nav-card next" href="#">
+    <p class="nav-card-dir">Next essay →</p>
+    <p class="nav-card-title">The grid as <em>universal organiser</em></p>
+  </a>
+</nav>
+
+<footer>
+  <span class="f-left">Tectonics — Architecture &amp; Software</span>
+  <span class="f-right">Essay No. 01</span>
+</footer>
+
+<script>
+  // Reading progress bar
+  const bar = document.getElementById('progress-bar');
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (scrollTop / docHeight * 100) + '%';
+  });
+
+  // Read time estimate
+  const content = document.getElementById('article-content');
+  if (content) {
+    const words = content.innerText.split(/\s+/).length;
+    const mins = Math.ceil(words / 220);
+    document.getElementById('read-time').textContent = mins + ' min read';
+  }
+</script>
+
+</body>
+</html>
